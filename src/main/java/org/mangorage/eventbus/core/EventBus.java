@@ -1,5 +1,7 @@
 package org.mangorage.eventbus.core;
 
+import org.mangorage.eventbus.events.CustomEvents;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -22,26 +24,31 @@ public class EventBus {
             return handler;
         }
 
-        public abstract void register(Consumer<E> listener);
+
+        public void register(T listener) {
+            get().register(listener);
+        }
 
         public abstract void post(E event);
     }
 
     private final Map<Class<?>, Sys<?, ?>> registeredHandlers = new HashMap<>();
+    private final Map<Class<?>, Sys<?, ?>> reversedRegisteredHandlers = new HashMap<>();
 
     private EventBus() {}
 
-    public <T, E> void registerHandler(Class<E> eventClazz, Sys<T, E> handler) {
+    public <T, E> void registerHandler(Class<T> fiEventClass, Class<E> eventClazz, Sys<T, E> handler) {
         registeredHandlers.put(eventClazz, handler);
+        reversedRegisteredHandlers.put(fiEventClass, handler);
     }
 
-    public <T> void register(Class<T> eventClass, Consumer<T> consumer) {
-        Sys<?, T> handler = (Sys<?, T>) registeredHandlers.get(eventClass);
-        handler.register(consumer);
+    public <T> void register(Class<T> eventClass, T listener) {
+        Sys<T, ?> handler = (Sys<T, ?>) reversedRegisteredHandlers.get(eventClass);
+        handler.register(listener);
     }
 
-    public <T> void post(T o) {
-        Sys<?, T> handler = (Sys<?, T>) registeredHandlers.get(o.getClass());
+    public <E> void post(E o) {
+        Sys<?, E> handler = (Sys<?, E>) registeredHandlers.get(o.getClass());
         handler.post(o);
     }
 }
