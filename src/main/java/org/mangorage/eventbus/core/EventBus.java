@@ -5,6 +5,7 @@ import org.mangorage.eventbus.events.SomeEvent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unchecked")
@@ -28,11 +29,21 @@ public class EventBus {
 
     public static void main(String[] args) {
         var bus = new EventBus();
-        EventHandler<CustomEvents.someEvent> some = EventHandler.create(a -> b -> a.forEach(c -> c.something(b)));
-        bus.registerHandler(CustomEvents.someEvent.class, SomeEvent.class, new Sys<>(some) {
+        EventHandler<CustomEvents.SomeFIEvent> some = EventHandler.create(a -> b -> {
+            for (CustomEvents.SomeFIEvent someFIEvent : a) {
+                if (someFIEvent.something(b)) return true;
+            }
+            return false;
+        });
+        bus.registerHandler(CustomEvents.SomeFIEvent.class, SomeEvent.class, new Sys<>(some) {
             @Override
             public void register(Consumer<SomeEvent> listener) {
-                get().register(a -> listener.accept(new SomeEvent(a)));
+                get().register(a -> {
+                    var cancel = new AtomicBoolean();
+                    listener.accept(new SomeEvent(a, cancel));
+                    System.out.println(cancel.get());
+                    return cancel.get();
+                });
             }
 
             @Override
@@ -41,11 +52,13 @@ public class EventBus {
             }
         });
         bus.register(SomeEvent.class, EventBus::Some);
+        bus.register(SomeEvent.class, EventBus::Some);
         bus.post(new SomeEvent("lol"));
     }
 
     public static void Some(SomeEvent event) {
         System.out.println("LOL -> " + event.value());
+        event.cancel();
     }
 
     private final Map<Class<?>, Sys<?, ?>> registeredHandlers = new HashMap<>();
@@ -54,7 +67,7 @@ public class EventBus {
         registeredHandlers.put(eventClazz, handler);
     }
 
-    public <T> void register(Class<?> eventClass, Consumer<T> consumer) {
+    public <T> void register(Class<T> eventClass, Consumer<T> consumer) {
         Sys<?, T> handler = (Sys<?, T>) registeredHandlers.get(eventClass);
         handler.register(consumer);
     }
