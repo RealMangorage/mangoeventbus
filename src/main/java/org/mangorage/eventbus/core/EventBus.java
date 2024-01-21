@@ -1,15 +1,15 @@
 package org.mangorage.eventbus.core;
 
-import org.mangorage.eventbus.events.CustomEvents;
-import org.mangorage.eventbus.events.SomeEvent;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 @SuppressWarnings("unchecked")
 public class EventBus {
+
+    public static EventBus create() {
+        return new EventBus();
+    }
 
     public static abstract class Sys<T, E> {
         private final EventHandler<T> handler;
@@ -18,45 +18,18 @@ public class EventBus {
             this.handler = handler;
         }
 
-        public EventHandler<T> get() {
+        protected EventHandler<T> get() {
             return handler;
         }
 
-        abstract void register(Consumer<E> listener);
+        public abstract void register(Consumer<E> listener);
 
-        abstract void post(E event);
-    }
-
-    public static void main(String[] args) {
-        var bus = new EventBus();
-        bus.registerHandler(CustomEvents.SomeFIEvent.class, SomeEvent.class, new Sys<>(CustomEvents.SOME_EVENT) {
-            @Override
-            public void register(Consumer<SomeEvent> listener) {
-                get().register(a -> {
-                    var cancel = new AtomicBoolean();
-                    listener.accept(new SomeEvent(a, cancel));
-                    return cancel.get();
-                });
-            }
-
-            @Override
-            void post(SomeEvent event) {
-                if (get().invoker().something(event.value())) event.cancel();
-            }
-        });
-        bus.register(SomeEvent.class, EventBus::Some);
-        bus.register(SomeEvent.class, EventBus::Some);
-        var e = new SomeEvent("lol");
-        bus.post(e);
-        System.out.println("Cancelled: " + e.isCancelled());
-    }
-
-    public static void Some(SomeEvent event) {
-        System.out.println("LOL -> " + event.value());
-        event.cancel();
+        public abstract void post(E event);
     }
 
     private final Map<Class<?>, Sys<?, ?>> registeredHandlers = new HashMap<>();
+
+    private EventBus() {}
 
     public <T, E> void registerHandler(Class<T> handlerClazz, Class<E> eventClazz, Sys<T, E> handler) {
         registeredHandlers.put(eventClazz, handler);
