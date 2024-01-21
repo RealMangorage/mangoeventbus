@@ -31,7 +31,7 @@ public class EventBus {
 
     private EventBus() {}
 
-    public <T, E> void registerHandler(Class<T> handlerClazz, Class<E> eventClazz, Sys<T, E> handler) {
+    public <T, E> void registerHandler(Class<E> eventClazz, Sys<T, E> handler) {
         registeredHandlers.put(eventClazz, handler);
     }
 

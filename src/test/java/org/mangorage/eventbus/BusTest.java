@@ -16,7 +16,7 @@ public class BusTest {
     @Test
     public void busTest() {
         var bus = EventBus.create();
-        bus.registerHandler(CustomEvents.SomeFIEvent.class, SomeEvent.class, new EventBus.Sys<>(SOME_EVENT) {
+        bus.registerHandler(SomeEvent.class, new EventBus.Sys<>(SOME_EVENT) {
 
             @Override
             public void register(Consumer<SomeEvent> listener) {
