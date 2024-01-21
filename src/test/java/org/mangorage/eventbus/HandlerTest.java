@@ -9,11 +9,15 @@ import static org.mangorage.eventbus.events.CustomEvents.SOME_EVENT;
 public class HandlerTest {
     @Test
     public void handlerTestMain() {
-        SOME_EVENT.register(a -> {
-            assertEquals("lol", a, "handler Test main failed");
-            return false;
-        });
+        var a = SOME_EVENT.register(this::handle);
 
         SOME_EVENT.invoker().something("lol"); // Invoking it
+        a.unregister();
+        SOME_EVENT.invoker().something("lol"); // Wont get anything..
+    }
+
+    public boolean handle(String a) {
+        System.out.println(a);
+        return false;
     }
 }
