@@ -1,10 +1,7 @@
 package org.mangorage.eventbus.core;
 
-import org.mangorage.eventbus.events.CustomEvents;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 @SuppressWarnings("unchecked")
 public class EventBus {
@@ -33,17 +30,16 @@ public class EventBus {
     }
 
     private final Map<Class<?>, Sys<?, ?>> registeredHandlers = new HashMap<>();
-    private final Map<Class<?>, Sys<?, ?>> reversedRegisteredHandlers = new HashMap<>();
 
     private EventBus() {}
 
     public <T, E> void registerHandler(Class<T> fiEventClass, Class<E> eventClazz, Sys<T, E> handler) {
         registeredHandlers.put(eventClazz, handler);
-        reversedRegisteredHandlers.put(fiEventClass, handler);
+        registeredHandlers.put(fiEventClass, handler);
     }
 
     public <T> void register(Class<T> eventClass, T listener) {
-        Sys<T, ?> handler = (Sys<T, ?>) reversedRegisteredHandlers.get(eventClass);
+        Sys<T, ?> handler = (Sys<T, ?>) registeredHandlers.get(eventClass);
         handler.register(listener);
     }
 

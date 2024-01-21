@@ -4,16 +4,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SomeEvent {
     private final String value;
-    private final AtomicBoolean cancelable;
+    private final AtomicBoolean cancelable = new AtomicBoolean();
 
-
-    public SomeEvent(String value, AtomicBoolean cancelable) {
-        this.value = value;
-        this.cancelable = cancelable;
-    }
 
     public SomeEvent(String value) {
-        this(value, new AtomicBoolean());
+        this.value = value;
     }
 
     public void cancel() {

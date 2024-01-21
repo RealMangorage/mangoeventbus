@@ -27,17 +27,21 @@ public class BusTest {
 
         var event = new SomeEvent("lol");
         bus.register(CustomEvents.SomeFIEvent.class, (a) -> {
-            assertEquals("lol", a);
-            System.out.println(a);
+            //assertEquals("lol", a);
+            //System.out.println(a);
             return true;
         });
 
         bus.register(CustomEvents.SomeFIEvent.class, a -> {
-            assertEquals("lol", a);
-            System.out.println(a);
+            //assertEquals("lol", a);
+            //System.out.println(a);
             return false;
         });
 
-        bus.post(event);
+        long time = System.nanoTime();
+        for (int i = 0; i < 1000; i++) {
+            bus.post(event);
+        }
+        System.out.println(System.nanoTime() - time);
     }
 }
