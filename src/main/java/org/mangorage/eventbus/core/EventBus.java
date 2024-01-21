@@ -29,31 +29,26 @@ public class EventBus {
 
     public static void main(String[] args) {
         var bus = new EventBus();
-        EventHandler<CustomEvents.SomeFIEvent> some = EventHandler.create(a -> b -> {
-            for (CustomEvents.SomeFIEvent someFIEvent : a) {
-                if (someFIEvent.something(b)) return true;
-            }
-            return false;
-        });
-        bus.registerHandler(CustomEvents.SomeFIEvent.class, SomeEvent.class, new Sys<>(some) {
+        bus.registerHandler(CustomEvents.SomeFIEvent.class, SomeEvent.class, new Sys<>(CustomEvents.SOME_EVENT) {
             @Override
             public void register(Consumer<SomeEvent> listener) {
                 get().register(a -> {
                     var cancel = new AtomicBoolean();
                     listener.accept(new SomeEvent(a, cancel));
-                    System.out.println(cancel.get());
                     return cancel.get();
                 });
             }
 
             @Override
             void post(SomeEvent event) {
-                get().invoker().something(event.value());
+                if (get().invoker().something(event.value())) event.cancel();
             }
         });
         bus.register(SomeEvent.class, EventBus::Some);
         bus.register(SomeEvent.class, EventBus::Some);
-        bus.post(new SomeEvent("lol"));
+        var e = new SomeEvent("lol");
+        bus.post(e);
+        System.out.println("Cancelled: " + e.isCancelled());
     }
 
     public static void Some(SomeEvent event) {

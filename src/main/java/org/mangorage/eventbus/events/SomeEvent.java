@@ -22,4 +22,8 @@ public class SomeEvent {
     public String value() {
         return value;
     }
+
+    public boolean isCancelled() {
+        return cancelable.get();
+    }
 }
