@@ -23,12 +23,19 @@ public class BusTest {
     public void testForkBus() {
         IEventBus<BaseEvent> bus = EventBus.create(BaseEvent.class);
         var testResult = new AtomicInteger();
+
+        SOME_EVENT.register(a -> {
+            assertEquals("result", a);
+            testResult.incrementAndGet();
+            return false;
+        });
+
         bus.registerEventHandler(CustomEvents.SomeFIEvent.class, SomeEvent.class, (fork) -> new EventHandlerSys<>(fork ? SOME_EVENT.fork() : SOME_EVENT) {
             @Override
             public void post(SomeEvent event) {
                 if (get().invoker().something(event.value())) event.cancel();
             }
-        }, false);
+        }, true); // Forking it so we don't use a shared base Instance, instead make ourselves an instance
 
         bus.register(CustomEvents.SomeFIEvent.class, (a) -> {
             assertEquals("result", a);
@@ -36,6 +43,9 @@ public class BusTest {
             return false;
         });
 
+        // Forking the bus while having all the EventHandlers registered
+        // but forked, so we don't use a shared base EventHandler Instance.
+        // instead make ourselves an instance
         var busB = bus.fork(true);
 
         busB.register(CustomEvents.SomeFIEvent.class, (a) -> {
