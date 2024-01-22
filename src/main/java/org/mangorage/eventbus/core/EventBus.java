@@ -1,5 +1,6 @@
 package org.mangorage.eventbus.core;
 
+import org.mangorage.eventbus.core.interfaces.EventHandlerSupplier;
 import org.mangorage.eventbus.core.interfaces.IEventBus;
 
 import java.util.ArrayList;
@@ -28,10 +29,10 @@ public class EventBus<B> implements IEventBus<B> {
     }
 
     @Override
-    public EventBus<B> fork() {
+    public EventBus<B> fork(boolean forkEventHandler) {
         var bus = new EventBus<>(baseClass);
         handlers.forEach(registeredEventHandler -> {
-            bus.registerEventHandlerInternal(bus.castEventHandlerInternal(registeredEventHandler));
+            bus.registerEventHandlerInternal(bus.castEventHandlerInternal(registeredEventHandler), forkEventHandler);
         });
         return bus;
     }
@@ -41,18 +42,22 @@ public class EventBus<B> implements IEventBus<B> {
         return (RegisteredEventHandler<T, E>) registeredEventHandler;
     }
 
-    private <T, E extends B> void registerEventHandlerInternal(RegisteredEventHandler<T, E> registeredEventHandler) {
+    private <T, E extends B> void registerEventHandlerInternal(RegisteredEventHandler<T, E> registeredEventHandler, boolean forkEventHandler) {
         registerEventHandler(
                 registeredEventHandler.getTClass(),
                 registeredEventHandler.getEClass(),
-                registeredEventHandler::create
+                registeredEventHandler::create,
+                forkEventHandler
         );
     }
 
 
     @Override
-    public <T, E extends B> void registerEventHandler(Class<T> fiEventClass, Class<E> eventClazz, Supplier<EventHandlerSys<T, E>> handlerSupplier) {
-        var handler = handlerSupplier.get();
+    public <T, E extends B> void registerEventHandler(Class<T> fiEventClass, Class<E> eventClazz, EventHandlerSupplier<EventHandlerSys<T, E>> handlerSupplier, boolean forkEventHandler) {
+        if (registeredHandlers.containsKey(fiEventClass)) throw new IllegalStateException("Already have an EventHandler registered for %s".formatted(fiEventClass));
+        if (registeredHandlers.containsKey(eventClazz)) throw new IllegalStateException("Already have an EventHandler registered for %s".formatted(eventClazz));
+
+        var handler = handlerSupplier.get(forkEventHandler);
         registeredHandlers.put(eventClazz, handler);
         registeredHandlers.put(fiEventClass, handler);
         handlers.add(new RegisteredEventHandler<>(fiEventClass, eventClazz, handlerSupplier));
