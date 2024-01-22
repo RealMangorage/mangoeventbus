@@ -1,73 +1,82 @@
 package org.mangorage.eventbus.core;
 
+import org.mangorage.eventbus.core.interfaces.IEventBus;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-@SuppressWarnings("unchecked")
-public class EventBus {
-
-    public static EventBus create() {
-        return new EventBus();
+public class EventBus<B> implements IEventBus<B> {
+    public static <B> IEventBus<B> create(Class<B> baseClass) {
+        return new EventBus<B>(baseClass);
     }
 
-    public static abstract class Sys<T, E> {
-        private final EventHandler<T> handler;
-
-        public Sys(EventHandler<T> handler) {
-            this.handler = handler;
-        }
-
-        protected EventHandler<T> get() {
-            return handler;
-        }
-
-        public void register(T listener) {
-            get().register(listener);
-        }
-
-        public abstract void post(E event);
-    }
-
-    private final Map<Class<?>, Sys<?, ?>> registeredHandlers;
+    private final Class<B> baseClass;
+    private final Map<Class<?>, EventHandlerSys<?, ?>> registeredHandlers;
     private final List<RegisteredEventHandler<?, ?>> handlers = new ArrayList<>();
 
-    private EventBus() {
-        registeredHandlers = new HashMap<>();
+    private EventBus(Class<B> baseClass) {
+        this.baseClass = baseClass;
+        this.registeredHandlers = new HashMap<>();
     }
 
-    private EventBus(Map<Class<?>, Sys<?, ?>> registeredHandlers) {
+    private EventBus(Class<B> baseClass, Map<Class<?>, EventHandlerSys<?, ?>> registeredHandlers) {
+        this.baseClass = baseClass;
         this.registeredHandlers = registeredHandlers;
     }
 
-    public EventBus fork() {
-        var bus = new EventBus();
+    @Override
+    public EventBus<B> fork() {
+        var bus = new EventBus<>(baseClass);
         handlers.forEach(registeredEventHandler -> {
-            bus.registerHandler(
-                    (Class) registeredEventHandler.gettClass(),
-                    (Class) registeredEventHandler.geteClass(),
-                    registeredEventHandler::create
-            );
+            bus.registerEventHandlerInternal(bus.castEventHandlerInternal(registeredEventHandler));
         });
         return bus;
     }
 
-    public <T, E> void registerHandler(Class<T> fiEventClass, Class<E> eventClazz, Supplier<Sys<T, E>> handlerSupplier) {
+    @SuppressWarnings("unchecked")
+    private <T, E extends B> RegisteredEventHandler<T, E> castEventHandlerInternal(RegisteredEventHandler<?, ?> registeredEventHandler) {
+        return (RegisteredEventHandler<T, E>) registeredEventHandler;
+    }
+
+    private <T, E extends B> void registerEventHandlerInternal(RegisteredEventHandler<T, E> registeredEventHandler) {
+        registerEventHandler(
+                registeredEventHandler.getTClass(),
+                registeredEventHandler.getEClass(),
+                registeredEventHandler::create
+        );
+    }
+
+
+    @Override
+    public <T, E extends B> void registerEventHandler(Class<T> fiEventClass, Class<E> eventClazz, Supplier<EventHandlerSys<T, E>> handlerSupplier) {
         var handler = handlerSupplier.get();
         registeredHandlers.put(eventClazz, handler);
         registeredHandlers.put(fiEventClass, handler);
         handlers.add(new RegisteredEventHandler<>(fiEventClass, eventClazz, handlerSupplier));
     }
 
-    public <T> void register(Class<T> eventClass, T listener) {
-        Sys<T, ?> handler = (Sys<T, ?>) registeredHandlers.get(eventClass);
-        handler.register(listener);
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T, E extends B> void register(Class<T> eventClass, T listener) {
+        EventHandlerSys<T, E> handler = (EventHandlerSys<T, E>) registeredHandlers.get(eventClass);
+        if (handler != null) {
+            handler.register(listener);
+        } else {
+            System.out.println("Unable to register a listener for %s due to it not having a registered EventHandler".formatted(eventClass.getName()));
+        }
     }
 
-    public <E> void post(E o) {
-        Sys<?, E> handler = (Sys<?, E>) registeredHandlers.get(o.getClass());
-        handler.post(o);
+    @Override
+    public <T, E extends B> void post(E o) {
+        @SuppressWarnings("unchecked")
+        EventHandlerSys<T, E> handler = (EventHandlerSys<T, E>) registeredHandlers.get(o.getClass());
+        if (handler != null) {
+            handler.post(o);
+        } else {
+            System.out.println("Unable to post %s due to it not having a registered EventHandler".formatted(o.getClass().getName()));
+        }
     }
 }

@@ -1,4 +1,4 @@
-package org.mangorage.eventbus.core;
+package org.mangorage.eventbus.misc;
 
 import java.lang.reflect.Array;
 

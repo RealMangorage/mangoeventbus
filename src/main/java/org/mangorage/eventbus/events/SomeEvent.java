@@ -2,7 +2,7 @@ package org.mangorage.eventbus.events;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SomeEvent {
+public class SomeEvent extends BaseEvent {
     private final String value;
     private final AtomicBoolean cancelable = new AtomicBoolean();
 

@@ -5,22 +5,22 @@ import java.util.function.Supplier;
 public class RegisteredEventHandler<T, E> {
     private final Class<T> tClass;
     private final Class<E> eClass;
-    private final Supplier<EventBus.Sys<T, E>> handlerSupplier;
-    public RegisteredEventHandler(Class<T> tClass, Class<E> eClass, Supplier<EventBus.Sys<T, E>> handlerSupplier) {
+    private final Supplier<EventHandlerSys<T, E>> handlerSupplier;
+    public RegisteredEventHandler(Class<T> tClass, Class<E> eClass, Supplier<EventHandlerSys<T, E>> handlerSupplier) {
         this.tClass = tClass;
         this.eClass = eClass;
         this.handlerSupplier = handlerSupplier;
     }
 
-    public EventBus.Sys<T, E> create() {
+    public EventHandlerSys<T, E> create() {
         return handlerSupplier.get();
     }
 
-    public Class<T> gettClass() {
+    public Class<T> getTClass() {
         return tClass;
     }
 
-    public Class<E> geteClass() {
+    public Class<E> getEClass() {
         return eClass;
     }
 }

@@ -1,14 +1,12 @@
 package org.mangorage.eventbus.core;
 
-import org.mangorage.eventbus.events.SomeEvent;
+import org.mangorage.eventbus.core.interfaces.UnregisterHook;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Function;
 
-import static org.mangorage.eventbus.core.Utils.removeNullElements;
+import static org.mangorage.eventbus.misc.Utils.removeNullElements;
 
 public class EventHandler<T> {
     public static <T> EventHandler<T> create(Class<T> eventClass, Function<T[], T> eventInvoker) {

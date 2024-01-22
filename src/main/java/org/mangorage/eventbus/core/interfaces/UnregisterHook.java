@@ -1,4 +1,4 @@
-package org.mangorage.eventbus.core;
+package org.mangorage.eventbus.core.interfaces;
 
 @FunctionalInterface
 public interface UnregisterHook {
